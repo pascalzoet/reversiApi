@@ -15,7 +15,6 @@ C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\Rev
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.RazorCoreGenerate.cache
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\Razor\Views\Auth\Login.g.cshtml.cs
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\Razor\Views\Auth\Register.g.cshtml.cs
-C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\Razor\Views\_Layout.g.cshtml.cs
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.RazorTargetAssemblyInfo.cache
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.RazorTargetAssemblyInfo.cs
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.Views.pdb
@@ -23,3 +22,6 @@ C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\Rev
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.pdb
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.csproj.CopyComplete
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\ReversiApi.csprojAssemblyReference.cache
+C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\Razor\Views\Dashboard\Dashboard.g.cshtml.cs
+C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\Razor\Views\Shared\_Layout.g.cshtml.cs
+C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Debug\netcoreapp2.2\Razor\Views\Dashboard\Create.g.cshtml.cs

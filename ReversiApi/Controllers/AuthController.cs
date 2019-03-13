@@ -12,10 +12,7 @@ namespace ReversiApi.Controllers
     public class AuthController : Controller
     {
         private readonly PlayerContext _context;
-
-        public const string SessionString = "UserLoggedIn";
-        public const string SessionInteger = "ReversiSessionInteger";
-        public const string SessionByte = "ReversieSessionByte";
+        UserManager _userManger = new UserManager();
 
         public AuthController(PlayerContext context)
         {
@@ -29,32 +26,24 @@ namespace ReversiApi.Controllers
             return View();
         }
 
-        [HttpPost]
+        [HttpPost, ActionName("login")]
         [Route("login")]
-        public IActionResult Login(string username, string password)
+        public async Task<IActionResult> LoginAsync(Player player)
         {
-            if (ModelState.IsValid)
+            if (!ModelState.IsValid) return View(player);
+            try
             {
-                var user = _context.Player.Where(p => p.Username.Equals(username)).First();
+                bool ingelogd = await _userManger.SignIn(HttpContext, player);
+                if (ingelogd)
+                    return RedirectToAction("Dashboard", "Dashboard");
+                else return RedirectToAction("Dashboard", "Dashboard");
 
-                if (user == null)
-                {
-                    return View(nameof(Login));
-                }
-                bool verifyPwd = BCrypt.Net.BCrypt.Verify(password, user.HashedPwd);
-
-                if (verifyPwd == true)
-                {
-                    //set session
-                    HttpContext.Session.SetString(SessionString, user.Username);
-                    return Redirect("/test");
-
-                } else
-                {
-                    return View(nameof(Login));
-                }
             }
-            return View(nameof(Login));
+            catch (Exception ex)
+            {
+                ModelState.AddModelError("summary", ex.Message);
+                return View(User);
+            }
         }
 
         [HttpGet]
@@ -65,28 +54,46 @@ namespace ReversiApi.Controllers
         }
 
 
-        [HttpPost]
+        [HttpPost, ActionName("register")]
         [Route("register")]
-        public IActionResult Register(string username, string email, string password)
+        public ActionResult Register(Player player)
         {
-            //check if user exist
-            var user = _context.Player.Where(p => p.Email == email);
-            if (user.Count() > 0)
+            if (!ModelState.IsValid)
             {
-                ViewData["message"] = "Email bestaat al";
-                return View();
+                return View(player);
             }
-            else
+            try
             {
-                _context.Player.Add(new Player
+                //check if the user allready exist in our database
+                bool exist = _userManger.UserExist(HttpContext, player);
+                if(exist)
                 {
-                    Email = email,
-                    Username = username,
-                    HashedPwd = HassPwd(password)
-                });
-                _context.SaveChanges();
+                    return RedirectToAction("login", "Auth");
+                }
+                else
+                {
+                    bool registerd = _userManger.RegisterAsync(HttpContext, player);
+                    if (registerd)
+                    {
+                        return RedirectToAction("login", "Auth");
+                    } else
+                    {
+                        return View(player);
+                    }
+                }
+            } catch (Exception ex)
+            {
+                ModelState.AddModelError("summary", ex.Message);
+                return View(player);
             }
-            return View(nameof(Login));
+        }
+
+        [HttpGet]
+        [Route("logout")]
+        public IActionResult Logout()
+        {
+            _userManger.SignOut(HttpContext);
+            return RedirectToAction("login", "Auth");
         }
 
         private string HassPwd(string password)

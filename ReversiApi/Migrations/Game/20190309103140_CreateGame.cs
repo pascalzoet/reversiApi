@@ -19,7 +19,8 @@ namespace ReversiApi.Migrations.Game
                     PlayerBlackToken = table.Column<string>(nullable: true),
                     OnSet = table.Column<int>(nullable: false),
                     Winner = table.Column<int>(nullable: true),
-                    Board = table.Column<string>(nullable: true)
+                    Board = table.Column<string>(nullable: true),
+                    GameStatus = table.Column<string>(nullable : false)
                 },
                 constraints: table =>
                 {

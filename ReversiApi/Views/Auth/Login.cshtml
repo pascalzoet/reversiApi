@@ -1,17 +1,28 @@
 ﻿@{ 
-    Layout = "../_Layout.cshtml";
+    Layout = "_Layout";
 }
 @{
     ViewData["Title"] = "Login";
 }
-<form action="" method="post">
-    <div>
-        <label>Gebruikersnaam</label>
-        <input type="text" name="username" value="" />
+<div class="row">
+    <div class="col">
+        <div class="card">
+            <div class="card-header">Inloggen</div>
+            <div class="card-body">
+                <form action="/login" method="post">
+                    <div class="form-group">
+                        <label for="exampleInputEmail1">Gebruikersnaam</label>
+                        <input type="text" class="form-control" id="username" aria-describedby="emailHelp" placeholder="Gebruikersnaam" name="UserName">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" class="form-control" name="Password" id="password" placeholder="Password">
+                    </div>
+                    <input type="submit" class="btn btn-primary" value="inloggen">
+                    <a href="/register" class="btn btn-primary">Registreren</a>
+                </form>
+            </div>
+        </div>
+
     </div>
-    <div>
-        <label>Wachtwoord</label>
-        <input type="password" name="password" value="" />
-    </div>
-    <input type="submit" name="submit" value="login" />
-</form>
+</div>

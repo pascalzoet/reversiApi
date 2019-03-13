@@ -21,35 +21,7 @@ namespace ReversiApi.Controllers
         {
             _context = context;
         }
-
-        /*
-         * Setup a new game instance in the database
-         * return json with game details
-         */
-        [Route("api/game/new")]
-        public ActionResult RequestNewGame()
-        {
-            //@TODO: Check who is loggedin currently
-
-            //@TODO: Check if the current user does not have a game running
-            string GameToken = Game.CreateGameToken();
-            _context.Game.Add(new Game()
-            {
-                Board = Game.CreateBoard(),
-                Description = "test game",
-                PlayerWhiteToken = "abc",
-                PlayerBlackToken = "defg",
-                GameToken = GameToken,
-                OnSet = 1
-            });
-            _context.SaveChanges();
-
-            var game = _context.Game
-                .Where(g => g.GameToken == GameToken)
-                .Select(g => new { g.GameToken, g.OnSet, g.PlayerBlackToken, g.PlayerWhiteToken }).First();
-            return Json(game);
-            
-        }
+       
 
         /*
          * Get the game details based on the game token

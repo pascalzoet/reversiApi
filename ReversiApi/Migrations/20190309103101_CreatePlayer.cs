@@ -15,7 +15,8 @@ namespace ReversiApi.Migrations
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
                     Username = table.Column<string>(nullable: true),
                     Email = table.Column<string>(nullable: true),
-                    HashedPwd = table.Column<string>(nullable: true),
+                    Password = table.Column<string>(nullable: true),
+                    UserRole = table.Column<string>(nullable: true),
                     Usertoken = table.Column<string>(nullable: true)
                 },
                 constraints: table =>

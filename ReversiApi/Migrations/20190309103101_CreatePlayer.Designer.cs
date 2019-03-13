@@ -28,9 +28,11 @@ namespace ReversiApi.Migrations
 
                     b.Property<string>("Email");
 
-                    b.Property<string>("HashedPwd");
+                    b.Property<string>("Password");
 
                     b.Property<string>("Username");
+
+                    b.Property<string>("UserRole");
 
                     b.Property<string>("Usertoken");
 

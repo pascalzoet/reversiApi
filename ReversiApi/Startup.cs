@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -12,6 +13,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReversiApi.Dal;
+using ReversiApi.Models;
 
 namespace ReversiApi
 {
@@ -22,7 +24,7 @@ namespace ReversiApi
             Configuration = configuration;
         }
 
-        public IConfiguration Configuration { get; }
+        public IConfiguration Configuration { get; set; }
 
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
@@ -38,13 +40,32 @@ namespace ReversiApi
                        .AllowAnyHeader();
             }));
 
+            services.AddAuthentication(
+                CookieAuthenticationDefaults.AuthenticationScheme
+                ).AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
+                options =>
+                {
+                    options.LoginPath = "/Login";
+                    options.LogoutPath = "/Logout";
+                    //expire after 15 minuten of inactivity
+                    options.ExpireTimeSpan = TimeSpan.FromSeconds(900);
+
+
+                });
+
+            services.AddAuthentication(options =>
+            {
+                options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+            });
+           
             //add mvc to application
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            services.Configure<Configuration>(Configuration.GetSection("CustomConfig"));
             //set databases for migrations
-            var connection = @"Server=(localdb)\mssqllocaldb;Database=Reversi;Trusted_Connection=True;";
-            services.AddDbContext<GameContext>(options => options.UseSqlServer(connection));
-            services.AddDbContext<PlayerContext>(options => options.UseSqlServer(connection));
+            services.AddDbContext<GameContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
+            services.AddDbContext<PlayerContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
+
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -63,13 +84,18 @@ namespace ReversiApi
 
             app.UseHttpsRedirection();
             app.UseSession();
+            app.UseCookiePolicy();
+            app.UseAuthentication();
             app.UseCors(builder => builder
                 .AllowAnyOrigin()
                 .AllowAnyMethod()
                 .AllowAnyHeader()
                 .AllowCredentials()
             );
+            app.UseDefaultFiles();
+            app.UseStaticFiles();
             app.UseMvc();
+
 
         }
     }

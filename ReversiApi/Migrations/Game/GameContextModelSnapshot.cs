@@ -34,8 +34,10 @@ namespace ReversiApi.Migrations.Game
                     b.Property<int>("OnSet");
 
                     b.Property<string>("PlayerBlackToken");
-
+                
                     b.Property<string>("PlayerWhiteToken");
+
+                    b.Property<string>("GameStatus");
 
                     b.Property<int?>("Winner");
 
