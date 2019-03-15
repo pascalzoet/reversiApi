@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using ReversiApi.Dal;
 using ReversiApi.Models;
 
@@ -14,13 +15,13 @@ namespace ReversiApi.Controllers
     {
         private readonly GameContext _context;
 
-        UserManager _userManger = new UserManager();
+        UserManager _userManger { get; set; }
         private Player Player { get; set; }
 
-        public DashboardController(GameContext context)
+        public DashboardController(GameContext context, IConfiguration config)
         {
             _context = context;
-
+            _userManger = new UserManager(config);
         }
 
         [Authorize]
@@ -31,7 +32,7 @@ namespace ReversiApi.Controllers
             Player = _userManger.GetLoggedinUser(HttpContext);
             //get player games
             Game game = _context.Game.Where(g => g.PlayerBlackToken == Player.UserToken || g.PlayerWhiteToken == Player.UserToken).Where(g => g.GameStatus != "finished").FirstOrDefault();
-            List<Game> games = _context.Game.Where(g => g.GameStatus == "waiting").ToList();
+            List<Game> games = _context.Game.Where(g => g.GameStatus == "waiting" && g.PlayerBlackToken != Player.UserToken && g.PlayerWhiteToken != Player.UserToken).ToList();
             ViewData["user"] = Player.UserName;
             ViewData["games"] = games;
             return View(game);
@@ -60,11 +61,12 @@ namespace ReversiApi.Controllers
         [Authorize]
         [HttpPost]
         [Route("/game/create")]
-        public ActionResult Create(string Description)
+        public ActionResult Create(string Name, string Description)
         {
             Player = _userManger.GetLoggedinUser(HttpContext);
             _context.Game.Add(new Game()
             {
+                Name = Name,
                 Board = Game.CreateBoard(),
                 GameStatus = "waiting",
                 OnSet = 1,

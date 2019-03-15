@@ -15,7 +15,14 @@ namespace ReversiApi.Dal
 {
     public class UserManager
     {
-        private readonly string _connectionstring = "Server=(localdb)\\MSSQLLocaldb;Database=Reversi;Trusted_Connection=True;";
+        //private readonly string _connectionstring = "Server=(localdb)\\MSSQLLocaldb;Database=Reversi;Trusted_Connection=True;";
+        private string _connectionstring { get; set; }
+
+
+        public UserManager(IConfiguration configuration)
+        {
+            _connectionstring = configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString");
+        }
 
         public async Task<bool> SignIn(HttpContext HttpContext, Player user, bool IsPersisent = false)
         {
@@ -201,6 +208,18 @@ namespace ReversiApi.Dal
                 sqlcon.Close();
             }
             return userList;
+        }
+
+        public bool IsLoggedIn(HttpContext context)
+        {
+            var user = context.User.FindFirst(ClaimTypes.NameIdentifier);
+            if (user == null)
+            {
+                return false;
+            } else
+            {
+                return true;
+            }
         }
     }
 }

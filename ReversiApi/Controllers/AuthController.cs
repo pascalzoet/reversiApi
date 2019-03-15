@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using ReversiApi.Dal;
 using ReversiApi.Models;
 
@@ -12,11 +13,12 @@ namespace ReversiApi.Controllers
     public class AuthController : Controller
     {
         private readonly PlayerContext _context;
-        UserManager _userManger = new UserManager();
+        UserManager _userManger { get; set; }
 
-        public AuthController(PlayerContext context)
+        public AuthController(PlayerContext context, IConfiguration config)
         {
             _context = context;
+            _userManger = new UserManager(config);
         }
 
         [HttpGet]

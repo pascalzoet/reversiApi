@@ -12,23 +12,38 @@
             <div class="card-header">
                 Mijn games
             </div>
-            <ul class="list-group list-group-flush">
-                @if  (Model != null) {
-                    <li class="list-group-item"><a href="/#access_token=@Model.GameToken&">@Model.Description</a></li>
+            <div class="list-group">
+                @if (Model != null)
+                {
+                <a href="/#access_token=@Model.GameToken&" class="list-group-item list-group-item-action flex-column align-items-start">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">@Model.Name</h5>
+                        <small>10 minuten geleden</small>
+                    </div>
+                    <p class="mb-1">@Model.Description</p>
+                </a>
                 }
-            </ul>
+            </div>
         </div>
     </div>
     <div class="col-md-auto">
         <div class="card" style="width: 18rem;">
             <div class="card-header">
-                Beschikbare games
+                Open games
             </div>
-            <ul class="list-group list-group-flush">
-                @foreach (var game in @games) {
-                    <li class="list-group-item"><a href="/game/join/@game.GameToken">@game.Description</a></li>
+            <div class="list-group">
+                @foreach (var game in @games)
+                {
+                    <a href="/game/join/@game.GameToken" class="list-group-item list-group-item-action flex-column align-items-start">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">@game.Name</h5>
+                            <small>10 minuten geleden</small>
+                        </div>
+                        <p class="mb-1">@game.Description</p>
+
+                    </a>
                 }
-            </ul>
+            </div>
         </div>
     </div>
 </div>

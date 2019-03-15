@@ -13,6 +13,7 @@ namespace ReversiApi.Migrations.Game
                 {
                     GameId = table.Column<int>(nullable: false)
                         .Annotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn),
+                    Name = table.Column<string>(nullable: false),
                     Description = table.Column<string>(nullable: true),
                     GameToken = table.Column<string>(nullable: true),
                     PlayerWhiteToken = table.Column<string>(nullable: true),

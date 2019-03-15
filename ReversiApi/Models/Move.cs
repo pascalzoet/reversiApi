@@ -14,5 +14,11 @@ namespace ReversiApi.Models
         public string GameToken { get; set; }
 
         public string PlayerToken { get; set; }
+
+        public bool Pass { get; set; }
+
+        public bool SetIsValid { get; set; }
+
+        public bool SkippedTurn { get; set; }
     }
 }

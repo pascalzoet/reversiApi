@@ -11,7 +11,10 @@ namespace ReversiApi.Models
     {
         [Key]
         public int GameId { get; set; }
+
+        public string Name { get; set; }
         public string Description { get; set; }
+
         public string GameToken { get; set; }
 
         public string PlayerWhiteToken { get; set; }
@@ -25,8 +28,12 @@ namespace ReversiApi.Models
 
         public string Board { get; set; }
 
+        private int[,] TempBoard { get; set; }
+
         public static string CreateBoard()
         {
+            //make a grid from 8 by 8
+            //set the 4 middle places with black and white so you can start the game
             int[,] board = new int[8, 8]
             {
                 {0,0,0,0,0,0,0,0 },
@@ -43,53 +50,92 @@ namespace ReversiApi.Models
                 {0,0,0,0,0,0,0,0 },
             };
 
+            //make the array to a json string so we can store the board in the database
             return JsonConvert.SerializeObject(board);
         }
 
         public static string CreateGameToken()
         {
+            //create a random token that alwasy ands with ==
             string token = Convert.ToBase64String(Guid.NewGuid().ToByteArray());
+
+            //return the token and replace a few characters that will break the url
             return token.Replace(@"\", "").Replace(@"+", "").Replace(@"&", "").Replace(@"/", "");
         }
 
-        private int[,] TempBoard { get; set; }
 
         /*
          * Deserialize the board object and change the value based on the given input from Move class
-         * @TODO: apply logic
+         * move the stone and flip stones that are taken by the move 
+         * Give back the board afterwards
+         * Return the move object with the message if the pass is applyed or it was an invalid move
          */
-        public int[,] SetTurn(Move move)
+        public Move SetTurn(Move move)
         {
             var board = JsonConvert.DeserializeObject<int[,]>(this.Board);
+            //store the board temporary in an array so other methods can change the board
             this.TempBoard = board;
-            if (this.CheckAround(move.MoveX, move.MoveY) == true)
+
+            //check around for stone from oponent
+            if (this.CheckIfCanMove(move.MoveX, move.MoveY) == true)
             {
+                move.SkippedTurn = false;
+                //set the stone that got requested by the player
                 this.TempBoard[move.MoveX, move.MoveY] = this.OnSet;
 
+                //check and steal stones from your oponent
                 CheckToFlip(move.MoveX, move.MoveY);
+
+                //set the temporary board back to a string
                 this.Board = JsonConvert.SerializeObject(this.TempBoard);
-                if (CanTurn())
+
+                //give the turn to the oponent and check if he can move
+                GiveTurn();
+
+                //if the oponent cant place a move give the turn back and check if the previous player can make a move
+                move.SkippedTurn = false;
+                if (!CanTurn())
                 {
+                    //give the turn back to original player
                     GiveTurn();
+                    move.SkippedTurn = true;
+
+                    //if he can, he will be onset otherwise we end the game
+                    if (!CanTurn())
+                    {
+                        //end the game and calculate the scores
+                        move.SkippedTurn = true;
+                        this.GameStatus = "finished";
+                        this.Winner = 1;
+                    }
                 }
+                move.SetIsValid = true;
+            } else
+            {
+                if (!CanTurn())
+                {
+                    this.GameStatus = "finished";
+                    this.Winner = 1;
+                }
+                move.SetIsValid = false;
             }
-            return board;
+            return move;
         }
 
         /*
-         * Check if there is atleast 1 stone near the desired place that is the oposist color
+         * Check if there is atleast 1 stone around the desired place of move and that is the oponents color
+         * if there is atleast 1 stone available check if the stone next to that one is your color
+         * loop will continue until each spot is checked
+         * return True | False
          */
-        private bool CheckAround(int row, int col)
+        private bool CheckIfCanMove(int row, int col)
         {
-            int ToCheck;
-            if (this.OnSet == 1)
-            {
-                ToCheck = 2;
-            } else
-            {
-                ToCheck = 1;
-            }
-            var board = this.TempBoard;
+            int ToCheck = this.WhoIsOponent();
+            //check who is onset and who is the oponent
+           
+
+            //collect the temporary board and store it in a variable we do not need to modify
+            var board = JsonConvert.DeserializeObject<int[,]>(this.Board);
 
             //loop through the rows
             for (int rowDir = -1; rowDir <= +1; rowDir++)
@@ -100,24 +146,26 @@ namespace ReversiApi.Models
                     {
                         continue;
                     }
-
+                    //set the current x and y coordinates
                     int rowCheck = row + rowDir;
                     int colCheck = col + colDir;
 
                     bool ItemFound = false;
 
-                    if (this.IsValidPosition(rowCheck, colCheck) == true)
+                    //place is inside the board boundaries
+                    while (this.IsValidPosition(rowCheck, colCheck) == true && board[rowCheck, colCheck] == ToCheck)
                     {
-                        if (board[rowCheck, colCheck] == ToCheck)
-                        {
+                            //move a place to the right and down
                             rowCheck += rowDir;
                             colCheck += colDir;
-                            ItemFound = true;
-                        }
-                    }
 
+                            //we found a item that is from the oponent
+                            ItemFound = true;
+                    }
+                    //if we have a found a stone from the oponent
                     if (ItemFound)
                     {
+                        //check if the place next to the found stone is inside the board and is from the curren onset player
                         if (this.IsValidPosition(rowCheck, colCheck) && board[rowCheck, colCheck] == this.OnSet)
                         {
                             return true;
@@ -128,23 +176,39 @@ namespace ReversiApi.Models
             return false;
         }
 
+        /*
+         * Validate if the given position is in the board
+         * Negative numbers or numbers higher than 7 are outside of the board
+         */
         private bool IsValidPosition(int row, int col)
         {
             return (row >= 0 && row <= 7) && (col >= 0 && col <= 7);
         }
 
+        private bool IsVisible(int row, int col)
+        {
+            var board = JsonConvert.DeserializeObject<int[,]>(this.Board);
+
+            if (board[row, col] == 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+        /*
+         * Loop through the entire board starting from the place where the stone got placed
+         * Each stone that is closed in by the current players color gets changed to the color
+         * from the current player
+         * Loop will chech horizontal, vertical and diagonal
+         */
         private void CheckToFlip(int row, int col)
         {
+            //list to store all the stones in that got flipped
             List<Move> finalItems = new List<Move>();
-            int ToCheck;
-            if (this.OnSet == 1)
-            {
-                ToCheck = 2;
-            }
-            else
-            {
-                ToCheck = 1;
-            }
+
+            //check again who is
+            int ToCheck = this.WhoIsOponent();
 
             for (int rowDir = -1; rowDir <= +1; rowDir++)
             {
@@ -159,7 +223,7 @@ namespace ReversiApi.Models
 
                     List<Move> possibleItems = new List<Move>();
 
-                    if (this.IsValidPosition(rowCheck, colCheck) == true && this.TempBoard[rowCheck, colCheck] == ToCheck)
+                    while (this.IsValidPosition(rowCheck, colCheck) == true && this.TempBoard[rowCheck, colCheck] == ToCheck)
                     {
                         possibleItems.Add(new Move()
                         {
@@ -198,22 +262,32 @@ namespace ReversiApi.Models
                 }
             }
         }
-
+        
+        /*
+         * Change the value of the x/y position to the current players color
+         */
         private void Flip(Move move)
         {
+            //check if the place is inside the field boundaries
             if (IsValidPosition(move.MoveX, move.MoveY)) {
 
+                //set the place to the current onset player
                 this.TempBoard[move.MoveX, move.MoveY] = this.OnSet;
             }
         }
 
-        private bool CanTurn()
+        /*
+         * Check if the next player can actualy take a turn
+         * If no turns are available
+         * the turn wil not be givin to the next player
+         */
+        public bool CanTurn()
         {
             for (int row = 0; row <= 7; row++)
             {
                 for (int col = 0; col <= 7; col++)
                 {
-                    if (CheckAround(row, col)) {
+                    if (CheckIfCanMove(row, col)) {
                         return true;
                     }
                 }
@@ -221,6 +295,24 @@ namespace ReversiApi.Models
             return false;
         }
 
+        /*
+         * Method the check who is the current oponent
+         */
+        private int WhoIsOponent()
+        {
+            if (this.OnSet == 1)
+            {
+                return 2;
+            }
+            else
+            {
+                return 1;
+            }
+        }
+
+        /*
+         * Give the turn to the oponent
+         */
         private void GiveTurn()
         {
             if (this.OnSet == 1)

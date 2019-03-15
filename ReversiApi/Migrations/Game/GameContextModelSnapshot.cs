@@ -29,6 +29,8 @@ namespace ReversiApi.Migrations.Game
 
                     b.Property<string>("Description");
 
+                    b.Property<string>("Name");
+
                     b.Property<string>("GameToken");
 
                     b.Property<int>("OnSet");
