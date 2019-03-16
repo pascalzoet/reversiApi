@@ -17,30 +17,56 @@
     #board table tr:nth-child(2n+1) td:nth-child(2n) {
       background: #067100;
       box-shadow: 0px 2px 18px 0px rgba(0, 0, 0, 0.5); }
-  #board .stone {
-    display: block;
-    width: 70px;
-    height: 70px;
-    border-radius: 60px;
-    -moz-border-radius: 60px;
-    -webkit-border-radius: 60px;
-    margin: 5px 0 0 5px;
-    background: #ffffff;
-    margin: 0 auto; }
+
+.stone {
+  display: block;
+  width: 70px;
+  height: 70px;
+  border-radius: 60px;
+  -moz-border-radius: 60px;
+  -webkit-border-radius: 60px;
+  margin: 5px 0 0 5px;
+  margin: 0 auto; }
+
+.stone-block-black {
+  display: none; }
 
 .black {
   background-color: black !important; }
 
+.white {
+  background: #ffffff; }
+
 .animate {
   -webkit-transform: rotateX(-180deg);
   transform: rotateX(-180deg); }
+
+#whois {
+  width: 80px;
+  float: left;
+  height: 80px;
+  text-align: center;
+  font-weight: bold; }
+  #whois .stone-block-white, #whois .stone-block-black {
+    border: 1px solid black;
+    padding: 5px;
+    background-color: burlywood; }
+  #whois .stone-type {
+    background-color: burlywood;
+    border: 1px solid black;
+    min-height: 20px; }
+
+#widgetPlace {
+  width: 100%;
+  margin: 0 auto;
+  position: fixed; }
 
 #log {
   position: absolute;
   float: right;
   right: 0;
   border: 1px solid black;
-  width: 400px;
+  width: 300px;
   min-height: 20px;
   top: 0;
   margin-top: 10px; }

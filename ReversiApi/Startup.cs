@@ -61,10 +61,10 @@ namespace ReversiApi
             //add mvc to application
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            services.Configure<Configuration>(Configuration.GetSection("CustomConfig"));
             //set databases for migrations
             services.AddDbContext<GameContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
             services.AddDbContext<PlayerContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
+            services.AddDbContext<ScoreContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
 
         }
 

@@ -17,14 +17,16 @@ namespace ReversiApi.Controllers
     public class GameController : Controller
     {
         private readonly GameContext _context;
+        private readonly ScoreContext _context_score;
 
         private Game Game { get; set; }
 
         private UserManager _manger { get; set; }
 
-        public GameController(GameContext context, IConfiguration config)
+        public GameController(GameContext context, ScoreContext ctxscore, IConfiguration config)
         {
             _context = context;
+            _context_score = ctxscore;
             _manger = new UserManager(config);
         }
 
@@ -57,6 +59,7 @@ namespace ReversiApi.Controllers
             {
                 message.Status = "error";
                 message.Description = "Geen zetten meer mogelijk, game is afgelopen";
+                game.GameStatus = "finished";
                 message.Data = JsonConvert.SerializeObject(game);
             }
             return Json(message);
@@ -118,22 +121,31 @@ namespace ReversiApi.Controllers
                 if (user.UserToken == TokenFroWhoIs)
                 {
                     var turn = this.Game.SetTurn(move);
-
-                    if (turn.SetIsValid == false)
+                    if (Game.GameStatus == "finished")
                     {
+                        var score = this.Game.CalculateScore();
+                        _context_score.Score.Add(score);
+                        message.Data = JsonConvert.SerializeObject(score);
                         message.Status = "error";
-                        message.Description = "zet is niet geldig";
-                    } else
-                    {
-                        message.Status = "ok";
-                        message.Description = "Zet gedaan";
                     }
-                    message.Data = JsonConvert.SerializeObject(Game);
-
+                    else
+                    {
+                        if (turn.SetIsValid == false)
+                        {
+                            message.Status = "error";
+                            message.Description = "zet is niet geldig";
+                        }
+                        else
+                        {
+                            message.Status = "ok";
+                            message.Description = "Zet gedaan";
+                        }
+                        message.Data = JsonConvert.SerializeObject(Game);
+                    }
                     _context.SaveChanges();
                 } else
                 {
-                    message.Status = "ok";
+                    message.Status = "error";
                     message.Description = "het is niet jou zet";
                     move.SetIsValid = false;
                     move.SkippedTurn = false;

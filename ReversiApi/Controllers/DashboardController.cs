@@ -82,6 +82,24 @@ namespace ReversiApi.Controllers
 
         [Authorize]
         [HttpGet]
+        [Route("/game/remove/{token}")]
+        public ActionResult Remove(string token)
+        {
+            var game = _context.Game.Where(g => g.GameToken == token).FirstOrDefault();
+
+            if (game == null)
+            {
+                return Redirect("/dasbhoard");
+            } else
+            {
+                _context.Remove(game);
+                _context.SaveChanges();
+                return Redirect("/dashboard");
+            }
+        }
+
+        [Authorize]
+        [HttpGet]
         [Route("/game/join/{token}")]
         public ActionResult Join(string token)
         {

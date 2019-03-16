@@ -149,13 +149,29 @@ Spa.Model = function () {
         var widget = new Widget(result["response"]["description"], "#widgetPlace", "warning");
         widget.Load();
       } else {
+        var _data = JSON.parse(result['response']['data']);
+
+        SetWhoIs(_data["OnSet"]);
         Spa.Reversi.buildgame(result["response"]["data"]);
       }
     }).then(function () {
-      setInterval(function () {
+      var poll = setInterval(function () {
         Spa.Data.loadgame().then(function (result) {
-          var NewGrid = JSON.parse(JSON.parse(result['response']['data'])['Board']);
-          Spa.Reversi.update(NewGrid);
+          if (result["response"]["status"] == "error") {
+            var widget = new Widget(result["response"]["description"], "#widgetPlace", "warning");
+            widget.Load();
+
+            if (data['GameStatus'] == "finished") {
+              clearInterval(poll);
+            }
+          } else {
+            var _data2 = JSON.parse(result['response']['data']);
+
+            var _NewGrid = JSON.parse(_data2['Board']);
+
+            Spa.Reversi.update(_NewGrid);
+            SetWhoIs(_data2["OnSet"]);
+          }
         });
       }, 1500);
     });
@@ -163,9 +179,29 @@ Spa.Model = function () {
 
   var RequestMove = function RequestMove(row, col) {
     Spa.Data.move(row, col).then(function (result) {
-      var NewGrid = JSON.parse(JSON.parse(result['response']['data'])['Board']);
-      Spa.Reversi.update(NewGrid);
+      if (result["response"]["status"] == "error") {
+        var widget = new Widget(result["response"]["description"], "#widgetPlace", "warning");
+        widget.Load();
+      } else {
+        var _NewGrid2 = JSON.parse(JSON.parse(result['response']['data'])['Board']);
+
+        Spa.Reversi.update(_NewGrid2);
+        var widget = new Widget("steen gezet, wacht op tegenstander", "#widgetPlace");
+        widget.Load();
+      }
     });
+  };
+
+  var SetWhoIs = function SetWhoIs(onset) {
+    if (onset == 1) {
+      $(".stone-block-white").show();
+      $(".stone-block-white").toggleClass("rotate");
+      $(".stone-block-black").hide();
+    } else {
+      $(".stone-block-black").toggleClass("rotate");
+      $(".stone-block-white").hide();
+      $(".stone-block-black").show();
+    }
   };
 
   return {
@@ -262,6 +298,7 @@ Spa.Reversi = function () {
 
           case 1:
             state = states.white;
+            stone.classList.add("white");
             break;
 
           case 2:
@@ -291,9 +328,11 @@ Spa.Reversi = function () {
           if (NewGrid[row][col] == 1) {
             CurrentGrid[row][col].state = states.white;
             CurrentGrid[row][col].elem.classList.remove("black");
+            CurrentGrid[row][col].elem.classList.add("white");
           } else if (NewGrid[row][col] == 2) {
             CurrentGrid[row][col].state = states.black;
             CurrentGrid[row][col].elem.classList.add("black");
+            CurrentGrid[row][col].elem.classList.remove("white");
           }
         }
       }
@@ -350,16 +389,5 @@ Spa.Reversi = function () {
   return {
     buildgame: init,
     update: updateBoard
-  };
-}();
-
-Spa.Log = function () {
-  var init = function init(message) {
-    console.log(message);
-    $("#loglist").append($("<li>").html(message));
-  };
-
-  return {
-    init: init
   };
 }();

@@ -106,7 +106,6 @@ namespace ReversiApi.Models
                         //end the game and calculate the scores
                         move.SkippedTurn = true;
                         this.GameStatus = "finished";
-                        this.Winner = 1;
                     }
                 }
                 move.SetIsValid = true;
@@ -137,6 +136,11 @@ namespace ReversiApi.Models
             //collect the temporary board and store it in a variable we do not need to modify
             var board = JsonConvert.DeserializeObject<int[,]>(this.Board);
 
+            if (!this.IsValidPosition(row, col) || this.IsVisible(row, col) )
+            {
+                return false;
+            }
+
             //loop through the rows
             for (int rowDir = -1; rowDir <= +1; rowDir++)
             {
@@ -153,7 +157,7 @@ namespace ReversiApi.Models
                     bool ItemFound = false;
 
                     //place is inside the board boundaries
-                    while (this.IsValidPosition(rowCheck, colCheck) == true && board[rowCheck, colCheck] == ToCheck)
+                    while (this.IsValidPosition(rowCheck, colCheck) == true && board[rowCheck, colCheck] == ToCheck && this.IsVisible(rowCheck, colCheck))
                     {
                             //move a place to the right and down
                             rowCheck += rowDir;
@@ -166,7 +170,7 @@ namespace ReversiApi.Models
                     if (ItemFound)
                     {
                         //check if the place next to the found stone is inside the board and is from the curren onset player
-                        if (this.IsValidPosition(rowCheck, colCheck) && board[rowCheck, colCheck] == this.OnSet)
+                        if (this.IsValidPosition(rowCheck, colCheck) && board[rowCheck, colCheck] == this.OnSet && this.IsVisible(rowCheck, colCheck))
                         {
                             return true;
                         }
@@ -191,9 +195,9 @@ namespace ReversiApi.Models
 
             if (board[row, col] == 0)
             {
-                return true;
+                return false;
             }
-            return false;
+            return true;
         }
 
         /*
@@ -223,7 +227,7 @@ namespace ReversiApi.Models
 
                     List<Move> possibleItems = new List<Move>();
 
-                    while (this.IsValidPosition(rowCheck, colCheck) == true && this.TempBoard[rowCheck, colCheck] == ToCheck)
+                    while (this.IsValidPosition(rowCheck, colCheck) == true && this.TempBoard[rowCheck, colCheck] == ToCheck && this.IsVisible(rowCheck, colCheck))
                     {
                         possibleItems.Add(new Move()
                         {
@@ -237,7 +241,7 @@ namespace ReversiApi.Models
                     if (possibleItems.Count() > 0)
                     {
 
-                        if (this.IsValidPosition(rowCheck, colCheck) && this.TempBoard[rowCheck, colCheck] == this.OnSet)
+                        if (this.IsValidPosition(rowCheck, colCheck) && this.TempBoard[rowCheck, colCheck] == this.OnSet && this.IsVisible(rowCheck, colCheck))
                         {
                             finalItems.Add(new Move()
                             {
@@ -322,6 +326,49 @@ namespace ReversiApi.Models
             {
                 this.OnSet = 1;
             }
+        }
+
+        public Score CalculateScore()
+        {
+            Score score = new Score();
+            int ScoreWhite = 0;
+            int ScoreBlack = 0;
+            var board = JsonConvert.DeserializeObject<int[,]>(this.Board);
+
+            for (int row = 0; row < 8; row++)
+            {
+                for (int col = 0; col < 8; col++)
+                {
+                    if (board[row, col] == 1)
+                    {
+                        ScoreWhite++;
+                    } else if (board[row, col] == 2)
+                    {
+                        ScoreBlack++;
+                    } else
+                    {
+                        //no score
+                    }
+                }
+            }
+            score.PlayerBlackScore = ScoreBlack;
+            score.PlayerWhiteScore = ScoreWhite;
+            score.GameToken = this.GameToken;
+
+            if (ScoreWhite > ScoreBlack)
+            {
+                score.WinnerToken = this.PlayerWhiteToken;
+            }
+            else if (ScoreWhite == ScoreBlack)
+            {
+                score.WinnerToken = null;
+            }
+            else
+            {
+                score.WinnerToken = this.PlayerBlackToken;
+            }
+
+            return score;
         }
     }
 
