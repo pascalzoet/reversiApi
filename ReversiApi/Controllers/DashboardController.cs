@@ -32,6 +32,10 @@ namespace ReversiApi.Controllers
             Player = _userManger.GetLoggedinUser(HttpContext);
             //get player games
             Game game = _context.Game.Where(g => g.PlayerBlackToken == Player.UserToken || g.PlayerWhiteToken == Player.UserToken).Where(g => g.GameStatus != "finished").FirstOrDefault();
+            if (game != null)
+            {
+                return RedirectToAction("Enter", "Dashboard", new { token = game.GameToken });
+            }
             List<Game> games = _context.Game.Where(g => g.GameStatus == "waiting" && g.PlayerBlackToken != Player.UserToken && g.PlayerWhiteToken != Player.UserToken).ToList();
             ViewData["user"] = Player.UserName;
             ViewData["games"] = games;
@@ -97,6 +101,28 @@ namespace ReversiApi.Controllers
                 return Redirect("/dashboard");
             }
         }
+
+        [Authorize]
+        [HttpGet]
+        [Route("/game/enter/{token}")]
+        public ActionResult Enter(string token)
+        {
+            var game = _context.Game.Where(g => g.GameToken == token).FirstOrDefault();
+            if (game == null)
+            {
+                //token does not exist
+                return Redirect("/dashboard");
+            }
+            if (game.GameStatus == "waiting")
+            {
+                return View("Waiting");
+            }
+            else
+            {
+                return Redirect("/#access_token=" + game.GameToken + "&");
+            }
+        }
+
 
         [Authorize]
         [HttpGet]

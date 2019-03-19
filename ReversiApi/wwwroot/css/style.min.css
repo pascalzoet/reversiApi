@@ -37,9 +37,25 @@
 .white {
   background: #ffffff; }
 
-.animate {
-  -webkit-transform: rotateX(-180deg);
-  transform: rotateX(-180deg); }
+.animate-white {
+  animation-name: animatewhite;
+  animation-duration: 2s; }
+
+.animate-black {
+  animation-name: animateblack;
+  animation-duration: 2s; }
+
+@keyframes animatewhite {
+  from {
+    background-color: black; }
+  to {
+    background-color: #ffffff; } }
+
+@keyframes animateblack {
+  from {
+    background-color: #ffffff; }
+  to {
+    background-color: black; } }
 
 #whois {
   width: 80px;
@@ -61,20 +77,55 @@
   margin: 0 auto;
   position: fixed; }
 
-#log {
+#toprow {
+  padding-bottom: 21px;
+  width: 100%;
+  position: absolute;
+  height: 100%; }
+
+#advertisement {
+  width: 200px;
   position: absolute;
   float: right;
-  right: 0;
   border: 1px solid black;
-  width: 300px;
-  min-height: 20px;
-  top: 0;
-  margin-top: 10px; }
+  right: 0;
+  top: 20px;
+  height: 20%;
+  text-align: center;
+  background-color: lightblue; }
+  #advertisement .header {
+    border-bottom: 1px solid black;
+    width: 100%;
+    font-weight: bold;
+    font-size: 20px; }
+  #advertisement .place-title {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    font-size: 40px; }
+  #advertisement .temp {
+    color: green;
+    font-size: 40px; }
+
+canvas {
+  height: 300px; }
+
+#stats {
+  width: 800px;
+  margin: 0 auto; }
+
+@media only screen and (max-width: 1200px) {
+  #toprow {
+    height: 200px;
+    position: relative; }
+    #toprow #advertisement {
+      height: 70%; } }
 
 @media only screen and (max-width: 840px) {
-  #log {
-    position: relative;
-    width: 100%; } }
+  #toprow {
+    height: 200px;
+    position: relative; }
+    #toprow #advertisement {
+      height: 70%; } }
 
 @media only screen and (max-width: 460px) {
   #board {
@@ -87,5 +138,6 @@
     border-radius: 20px;
     -moz-border-radius: 20px;
     -webkit-border-radius: 20px; }
-  #log {
+  #toprow {
+    height: 200px;
     position: relative; } }

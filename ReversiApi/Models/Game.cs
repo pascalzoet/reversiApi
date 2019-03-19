@@ -317,7 +317,7 @@ namespace ReversiApi.Models
         /*
          * Give the turn to the oponent
          */
-        private void GiveTurn()
+        public void GiveTurn()
         {
             if (this.OnSet == 1)
             {
@@ -371,6 +371,5 @@ namespace ReversiApi.Models
             return score;
         }
     }
-
 }
     

@@ -50,12 +50,14 @@ namespace ReversiApi.Controllers
             {
                 message.Status = "error";
                 message.Description = "Invalid token";
-            } else if (game.GameStatus ==  "waiting" || game.CanTurn() == true)
+            }
+            else if (game.GameStatus == "waiting" || game.CanTurn() == true)
             {
                 message.Status = "ok";
                 message.Description = "game data geladen";
                 message.Data = JsonConvert.SerializeObject(game);
-            } else
+            }
+            else
             {
                 message.Status = "error";
                 message.Description = "Geen zetten meer mogelijk, game is afgelopen";
@@ -69,24 +71,28 @@ namespace ReversiApi.Controllers
         public ActionResult GetPlayers(string token)
         {
             Message message = new Message();
+            var user = _manger.GetLoggedinUser(HttpContext);
+
             var game = _context.Game.Where(g => g.GameToken == token).FirstOrDefault();
 
             if (game == null)
             {
                 message.Status = "error";
                 message.Description = "invalid token";
-            } else
+            }
+            else
             {
-                if (game.PlayerBlackToken == null || game.PlayerWhiteToken == null)
+                if (game.PlayerBlackToken == user.UserToken)
                 {
-                    message.Status = "error";
-                    message.Description = "nog geen tegenstander gevonden";
-                } else
-                {
-                    message.Status = "ok";
-                    message.Description = "Tegenstander gevonden";
-                    message.Data = JsonConvert.SerializeObject(message);
+                    message.Description = "Je speelt als zwart";
+                    message.Data = "Zwart";
                 }
+                else
+                {
+                    message.Description = "Je speelt als wit";
+                    message.Data = "wit";
+                }
+                message.Status = "ok";
             }
             return Json(message);
         }
@@ -106,7 +112,8 @@ namespace ReversiApi.Controllers
             {
                 message.Description = "invalid token";
                 message.Status = "error";
-            } else
+            }
+            else
             {
                 //check if it is your turn
                 string TokenFroWhoIs;
@@ -121,10 +128,12 @@ namespace ReversiApi.Controllers
                 if (user.UserToken == TokenFroWhoIs)
                 {
                     var turn = this.Game.SetTurn(move);
+                    message.Board = Game.Board;
                     if (Game.GameStatus == "finished")
                     {
                         var score = this.Game.CalculateScore();
                         _context_score.Score.Add(score);
+                        _context_score.SaveChanges();
                         message.Data = JsonConvert.SerializeObject(score);
                         message.Status = "error";
                     }
@@ -134,22 +143,89 @@ namespace ReversiApi.Controllers
                         {
                             message.Status = "error";
                             message.Description = "zet is niet geldig";
+                            move.SetIsValid = false;
+                            move.SkippedTurn = false;
                         }
                         else
                         {
                             message.Status = "ok";
                             message.Description = "Zet gedaan";
+                            move.SetIsValid = true;
+                            move.SkippedTurn = false;
                         }
-                        message.Data = JsonConvert.SerializeObject(Game);
+                        message.Data = JsonConvert.SerializeObject(move);
                     }
                     _context.SaveChanges();
-                } else
+                }
+                else
                 {
                     message.Status = "error";
                     message.Description = "het is niet jou zet";
                     move.SetIsValid = false;
                     move.SkippedTurn = false;
                     message.Data = JsonConvert.SerializeObject(Game);
+                }
+            }
+            return Json(message);
+        }
+
+        [HttpGet]
+        [Route("/api/stats/{token}")]
+        public ActionResult Stats(string token)
+        {
+            Message message = new Message();
+            this.Game = _context.Game.Where(g => g.GameToken == token).FirstOrDefault();
+
+            if (Game == null)
+            {
+                message.Status = "error";
+                message.Description = "invalid token";
+                return Json(message);
+            }
+            else
+            {
+                message.Status = "ok";
+                message.Data = JsonConvert.SerializeObject(this.Game.CalculateScore());
+                message.Description = "statestieken";
+                return Json(message);
+            }
+        }
+        [HttpGet]
+        [Route("/api/skip/{token}")]
+        public ActionResult Skipturn(string token)
+        {
+            Message message = new Message();
+            var user = _manger.GetLoggedinUser(HttpContext);
+            this.Game = _context.Game.Where(g => g.GameToken == token).FirstOrDefault();
+            if (Game == null)
+            {
+                message.Status = "error";
+                message.Description = "invalid token";
+                return Json(message);
+            }
+            else
+            {
+                int you;
+                //your number
+                if (user.UserToken == Game.PlayerBlackToken)
+                {
+                    you = 2;
+                } else
+                {
+                    you = 1;
+                }
+
+                if (you == Game.OnSet)
+                {
+                    message.Status = "Ok";
+                    message.Description = "Beurt overgeslagen";
+                    Game.GiveTurn();
+                    _context.SaveChanges();
+                } else
+                {
+                    message.Status = "error";
+                    message.Description = "Je bent niet aan de beurt";
+                    _context.SaveChanges();
                 }
             }
             return Json(message);
