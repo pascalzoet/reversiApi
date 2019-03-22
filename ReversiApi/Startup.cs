@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using ReversiApi.Dal;
 using ReversiApi.Models;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
 
 namespace ReversiApi
 {
@@ -61,10 +62,23 @@ namespace ReversiApi
             //add mvc to application
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
+            if (Configuration.GetSection("Environment").Value == "Production")
+            {
+                string connectionstring = Configuration.GetConnectionString("Production");
+                services.AddDbContext<GameContext>(options => options.UseSqlServer(connectionstring));
+                services.AddDbContext<PlayerContext>(options => options.UseSqlServer(connectionstring));
+                services.AddDbContext<ScoreContext>(options => options.UseSqlServer(connectionstring));
+            }
+            else
+            {
+                string connectionstring = Configuration.GetConnectionString("TestDatabase");
+                services.AddDbContext<GameContext>(options => options.UseMySql(connectionstring));
+                services.AddDbContext<PlayerContext>(options => options.UseMySql(connectionstring));
+                services.AddDbContext<ScoreContext>(options => options.UseMySql(connectionstring));
+            }
+
             //set databases for migrations
-            services.AddDbContext<GameContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
-            services.AddDbContext<PlayerContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
-            services.AddDbContext<ScoreContext>(options => options.UseSqlServer(Configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString")));
+         
 
         }
 

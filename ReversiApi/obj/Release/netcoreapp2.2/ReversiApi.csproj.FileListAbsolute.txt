@@ -25,3 +25,4 @@ C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\Rev
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Release\netcoreapp2.2\ReversiApi.dll
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Release\netcoreapp2.2\ReversiApi.pdb
 C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Release\netcoreapp2.2\ReversiApi.csproj.CopyComplete
+C:\Users\pascal\source\repos\windesheim\server technology\reversi\ReversiApi\ReversiApi\obj\Release\netcoreapp2.2\Razor\Views\Dashboard\Waiting.g.cshtml.cs

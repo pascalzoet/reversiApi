@@ -21,7 +21,15 @@ namespace ReversiApi.Dal
 
         public UserManager(IConfiguration configuration)
         {
-            _connectionstring = configuration.GetSection("CustomConfig").GetValue<String>("ConnectionString");
+            if (configuration.GetSection("Environment").Value == "Production")
+            {
+                _connectionstring = configuration.GetConnectionString("Production");
+            }
+            else
+            {
+                _connectionstring = configuration.GetConnectionString("TestDatabase");
+            }
+
         }
 
         public async Task<bool> SignIn(HttpContext HttpContext, Player user, bool IsPersisent = false)
