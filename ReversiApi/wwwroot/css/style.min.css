@@ -20,19 +20,26 @@
 
 .stone {
   display: block;
-  width: 70px;
-  height: 70px;
+  width: 50px;
+  height: 50px;
   border-radius: 60px;
   -moz-border-radius: 60px;
   -webkit-border-radius: 60px;
   margin: 5px 0 0 5px;
-  margin: 0 auto; }
+  margin: 0 auto;
+  padding: 5px; }
+
+.innerstone {
+  background-color: grey;
+  width: 40px;
+  height: 40px;
+  opacity: 0.5; }
 
 .stone-block-black {
   display: none; }
 
 .black {
-  background-color: black !important; }
+  background-color: black; }
 
 .white {
   background: #ffffff; }

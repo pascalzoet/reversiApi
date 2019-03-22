@@ -197,7 +197,7 @@ Spa.Model = function () {
               clearInterval(poll);
               setInterval(function () {
                 location.href = "/dashboard";
-              }, 5000);
+              }, 3000);
             }
           } else {
             var NewGrid = JSON.parse(data['Board']);
@@ -207,18 +207,13 @@ Spa.Model = function () {
         });
       }, 1500);
     }).then(function () {
-      //request weathers stats
-      return Spa.Api.weather();
-    }).then(function (result) {
-      //build weather api stats
-      $("#advertisement > .place-title").html(result["name"]);
-      $("#advertisement > .temp").html(parseInt(result["main"]["temp"] - 273.15) + "&#8451;");
-    }).then(function () {
       //get the stats for the chart
       Spa.Data.stats().then(function (result) {
         Spa.Grafiek.init(JSON.parse(result["response"]["data"]));
         Spa.Grafiek.toonGrafiek();
       });
+    }).then(function () {
+      Spa.Template.parse();
     });
   };
 
@@ -302,6 +297,9 @@ Spa.Reversi = function () {
         var td = document.createElement('td'); //create a stone
 
         var stone = document.createElement("span");
+        var innerstone = document.createElement("span");
+        innerstone.classList.add("stone");
+        innerstone.classList.add("innerstone");
         stone.classList.add("stone");
         stone.classList.add("animate");
         var checkState = CurrentGrid[row][col];
@@ -323,6 +321,7 @@ Spa.Reversi = function () {
             state = states.black;
         }
 
+        stone.appendChild(innerstone);
         tr.appendChild(td);
         td.appendChild(stone);
         CurrentGrid[row][col] = initItemState(stone, state); //bind the element to the grid
@@ -476,13 +475,28 @@ Spa.Grafiek = function () {
 }();
 
 Spa.Template = function () {
-  var init = function init(template) {};
+  var config = {
+    templates: null
+  };
+
+  var init = function init(templates) {
+    config.templates = templates;
+  };
 
   var getTemplate = function getTemplate() {};
 
-  var parseTemplate = function parseTemplate() {};
+  var parseTemplate = function parseTemplate() {
+    //parse weater
+    Spa.Api.weather().then(function (result) {
+      $("#add").html(reversi_templates.src.templates.gameplay.onset({
+        "place": result["name"],
+        "temp": parseInt(result["main"]["temp"] - 273.15) + " Graden"
+      }));
+    });
+  };
 
   return {
-    init: init
+    init: init,
+    parse: parseTemplate
   };
 }();
