@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
+using MySql.Data.MySqlClient;
 using ReversiApi.Models;
 using System;
 using System.Collections.Generic;
@@ -17,10 +18,12 @@ namespace ReversiApi.Dal
     {
         //private readonly string _connectionstring = "Server=(localdb)\\MSSQLLocaldb;Database=Reversi;Trusted_Connection=True;";
         private string _connectionstring { get; set; }
+        private string Env { get; set; }
 
 
         public UserManager(IConfiguration configuration)
         {
+            Env = configuration.GetSection("Environment").Value;
             if (configuration.GetSection("Environment").Value == "Production")
             {
                 _connectionstring = configuration.GetConnectionString("Production");
@@ -34,64 +37,129 @@ namespace ReversiApi.Dal
 
         public async Task<bool> SignIn(HttpContext HttpContext, Player user, bool IsPersisent = false)
         {
-            using (var sqlCon = new SqlConnection(_connectionstring))
+            if (Env == "Production")
             {
-                bool ingelogd = false;
-                string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE UserName=@User";
-
-                sqlCon.Open();
-
-                SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
-                sqlCmd.Parameters.AddWithValue("@User", user.UserName);
-                //sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
-
-                SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                var userModel = new Player();
-
-                if (rdr.Read())
+                using (var sqlCon = new MySqlConnection(_connectionstring))
                 {
-                    if (VerifyPassword(user.Password, rdr["Password"].ToString()))
+                    bool ingelogd = false;
+                    string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE UserName=@User";
+
+                    sqlCon.Open();
+
+                    MySqlCommand sqlCmd = new MySqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@User", user.UserName);
+                    //sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
+
+                    MySqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    var userModel = new Player();
+
+                    if (rdr.Read())
                     {
-                        userModel.PlayerId = Convert.ToInt32(rdr["PlayerId"]);
-                        userModel.UserName = rdr["UserName"].ToString();
-                        userModel.Email = rdr["Email"].ToString();
-                        userModel.Password = rdr["Password"].ToString();
-                        userModel.UserRole = rdr["UserRole"].ToString();
-                        userModel.UserToken = rdr["UserToken"].ToString();
-                        ingelogd = true;
+                        if (VerifyPassword(user.Password, rdr["Password"].ToString()))
+                        {
+                            userModel.PlayerId = Convert.ToInt32(rdr["PlayerId"]);
+                            userModel.UserName = rdr["UserName"].ToString();
+                            userModel.Email = rdr["Email"].ToString();
+                            userModel.Password = rdr["Password"].ToString();
+                            userModel.UserRole = rdr["UserRole"].ToString();
+                            userModel.UserToken = rdr["UserToken"].ToString();
+                            ingelogd = true;
+                        }
                     }
+
+                    sqlCon.Close();
+
+                    ClaimsIdentity identity = new ClaimsIdentity(this.GetUserClaims(userModel), CookieAuthenticationDefaults.AuthenticationScheme);
+                    ClaimsPrincipal principal = new ClaimsPrincipal(identity);
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                    return ingelogd;
                 }
+            } else
+            {
+                using (var sqlCon = new SqlConnection(_connectionstring))
+                {
+                    bool ingelogd = false;
+                    string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE UserName=@User";
 
-                sqlCon.Close();
+                    sqlCon.Open();
 
-                ClaimsIdentity identity = new ClaimsIdentity(this.GetUserClaims(userModel), CookieAuthenticationDefaults.AuthenticationScheme);
-                ClaimsPrincipal principal = new ClaimsPrincipal(identity);
-                await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
-                return ingelogd;
+                    SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@User", user.UserName);
+                    //sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
+
+                    SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    var userModel = new Player();
+
+                    if (rdr.Read())
+                    {
+                        if (VerifyPassword(user.Password, rdr["Password"].ToString()))
+                        {
+                            userModel.PlayerId = Convert.ToInt32(rdr["PlayerId"]);
+                            userModel.UserName = rdr["UserName"].ToString();
+                            userModel.Email = rdr["Email"].ToString();
+                            userModel.Password = rdr["Password"].ToString();
+                            userModel.UserRole = rdr["UserRole"].ToString();
+                            userModel.UserToken = rdr["UserToken"].ToString();
+                            ingelogd = true;
+                        }
+                    }
+
+                    sqlCon.Close();
+
+                    ClaimsIdentity identity = new ClaimsIdentity(this.GetUserClaims(userModel), CookieAuthenticationDefaults.AuthenticationScheme);
+                    ClaimsPrincipal principal = new ClaimsPrincipal(identity);
+                    await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
+                    return ingelogd;
+                }
             }
         }
 
         public bool RegisterAsync(HttpContext HttpContext, Player user, bool IsPersisent = false)
         {
             bool created = false;
-            using (var sqlCon = new SqlConnection(_connectionstring))
+            if (Env == "Production")
             {
-                string queryString = "INSERT INTO Player (UserName, Email, Password, UserRole, UserToken) VALUES (@UserName, @Email, @Password, @UserRole, @UserToken)";
+                using (var sqlCon = new MySqlConnection(_connectionstring))
+                {
+                    string queryString = "INSERT INTO Player (UserName, Email, Password, UserRole, UserToken) VALUES (@UserName, @Email, @Password, @UserRole, @UserToken)";
 
-                sqlCon.Open();
+                    sqlCon.Open();
 
-                SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
-                sqlCmd.Parameters.AddWithValue("@UserName", user.UserName);
-                sqlCmd.Parameters.AddWithValue("@Email", user.Email);
-                sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
-                sqlCmd.Parameters.AddWithValue("@UserRole", "User");
-                sqlCmd.Parameters.AddWithValue("@UserToken", GenerateToken());
+                    MySqlCommand sqlCmd = new MySqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@UserName", user.UserName);
+                    sqlCmd.Parameters.AddWithValue("@Email", user.Email);
+                    sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
+                    sqlCmd.Parameters.AddWithValue("@UserRole", "User");
+                    sqlCmd.Parameters.AddWithValue("@UserToken", GenerateToken());
 
-                SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                created = true;
-                sqlCon.Close();
+                    MySqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    created = true;
+                    sqlCon.Close();
+                }
+                return created;
             }
-            return created;
+            else
+            {
+                using (var sqlCon = new SqlConnection(_connectionstring))
+                {
+                    string queryString = "INSERT INTO Player (UserName, Email, Password, UserRole, UserToken) VALUES (@UserName, @Email, @Password, @UserRole, @UserToken)";
+
+                    sqlCon.Open();
+
+                    SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@UserName", user.UserName);
+                    sqlCmd.Parameters.AddWithValue("@Email", user.Email);
+                    sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
+                    sqlCmd.Parameters.AddWithValue("@UserRole", "User");
+                    sqlCmd.Parameters.AddWithValue("@UserToken", GenerateToken());
+
+                    SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    created = true;
+                    sqlCon.Close();
+                }
+                return created;
+            }
+            
         }
 
         private string Hashpwd(string password)
@@ -114,26 +182,52 @@ namespace ReversiApi.Dal
 
         public bool UserExist(HttpContext context, Player player)
         {
-            bool exist = false;
-            using (var sqlCon = new SqlConnection(_connectionstring))
+            if (Env == "Production")
             {
-
-                string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE UserName=@User and Email=@Email";
-
-                sqlCon.Open();
-
-                SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
-                sqlCmd.Parameters.AddWithValue("@User", player.UserName);
-                sqlCmd.Parameters.AddWithValue("@Email", player.Email);
-
-                SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                if (rdr.Read())
+                bool exist = false;
+                using (var sqlCon = new MySqlConnection(_connectionstring))
                 {
-                    exist = true;
+
+                    string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE UserName=@User and Email=@Email";
+
+                    sqlCon.Open();
+
+                    MySqlCommand sqlCmd = new MySqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@User", player.UserName);
+                    sqlCmd.Parameters.AddWithValue("@Email", player.Email);
+
+                    MySqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    if (rdr.Read())
+                    {
+                        exist = true;
+                    }
+                    sqlCon.Close();
                 }
-                sqlCon.Close();
+                return exist;
+            } else
+            {
+                bool exist = false;
+                using (var sqlCon = new SqlConnection(_connectionstring))
+                {
+
+                    string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE UserName=@User and Email=@Email";
+
+                    sqlCon.Open();
+
+                    SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@User", player.UserName);
+                    sqlCmd.Parameters.AddWithValue("@Email", player.Email);
+
+                    SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    if (rdr.Read())
+                    {
+                        exist = true;
+                    }
+                    sqlCon.Close();
+                }
+                return exist;
             }
-            return exist;
+         
         }
 
         private IEnumerable<Claim> GetUserClaims(Player player)
@@ -149,32 +243,64 @@ namespace ReversiApi.Dal
 
         public Player GetLoggedinUser(HttpContext context)
         {
-            var UserId = context.User.FindFirst(ClaimTypes.NameIdentifier).Value;
-            using (var sqlCon = new SqlConnection(_connectionstring))
+            if (Env == "Production")
             {
-                string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE PlayerId=@Id";
-
-                sqlCon.Open();
-
-                SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
-                sqlCmd.Parameters.AddWithValue("@Id", UserId);
-                //sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
-
-                SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
-                var userModel = new Player();
-
-                if (rdr.Read())
+                var UserId = context.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                using (var sqlCon = new MySqlConnection(_connectionstring))
                 {
-                    userModel.PlayerId = Convert.ToInt32(rdr["PlayerId"]);
-                    userModel.UserName = rdr["UserName"].ToString();
-                    userModel.Email = rdr["Email"].ToString();
-                    userModel.UserRole = rdr["UserRole"].ToString();
-                    userModel.UserToken = rdr["UserToken"].ToString();
-                }
+                    string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE PlayerId=@Id";
 
-                sqlCon.Close();
-                return userModel;
+                    sqlCon.Open();
+
+                    MySqlCommand sqlCmd = new MySqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@Id", UserId);
+                    //sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
+
+                    MySqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    var userModel = new Player();
+
+                    if (rdr.Read())
+                    {
+                        userModel.PlayerId = Convert.ToInt32(rdr["PlayerId"]);
+                        userModel.UserName = rdr["UserName"].ToString();
+                        userModel.Email = rdr["Email"].ToString();
+                        userModel.UserRole = rdr["UserRole"].ToString();
+                        userModel.UserToken = rdr["UserToken"].ToString();
+                    }
+
+                    sqlCon.Close();
+                    return userModel;
+                }
+            } else
+            {
+                var UserId = context.User.FindFirst(ClaimTypes.NameIdentifier).Value;
+                using (var sqlCon = new SqlConnection(_connectionstring))
+                {
+                    string queryString = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken FROM Player WHERE PlayerId=@Id";
+
+                    sqlCon.Open();
+
+                    SqlCommand sqlCmd = new SqlCommand(queryString, sqlCon);
+                    sqlCmd.Parameters.AddWithValue("@Id", UserId);
+                    //sqlCmd.Parameters.AddWithValue("@Password", Hashpwd(user.Password));
+
+                    SqlDataReader rdr = sqlCmd.ExecuteReader(System.Data.CommandBehavior.SingleRow);
+                    var userModel = new Player();
+
+                    if (rdr.Read())
+                    {
+                        userModel.PlayerId = Convert.ToInt32(rdr["PlayerId"]);
+                        userModel.UserName = rdr["UserName"].ToString();
+                        userModel.Email = rdr["Email"].ToString();
+                        userModel.UserRole = rdr["UserRole"].ToString();
+                        userModel.UserToken = rdr["UserToken"].ToString();
+                    }
+
+                    sqlCon.Close();
+                    return userModel;
+                }
             }
+            
         }
 
         private IEnumerable<Claim> GetUserRoleClaims(Player player)
@@ -196,25 +322,50 @@ namespace ReversiApi.Dal
             var userList = new List<Player>();
             string query = "SELECT PlayerId, UserName, Email, Password, UserRole, UserToken From Player";
 
-            using (SqlConnection sqlcon = new SqlConnection(_connectionstring))
+            if (Env == "Production")
             {
-                sqlcon.Open();
-                SqlCommand sqlCmd = new SqlCommand(query, sqlcon);
-                SqlDataReader rdr = sqlCmd.ExecuteReader();
-
-                while (rdr.Read())
+                using (MySqlConnection sqlcon = new MySqlConnection(_connectionstring))
                 {
-                    var userModel = new Player();
-                    userModel.PlayerId = Convert.ToInt32(rdr["UserId"]);
-                    userModel.UserName = rdr["UserName"].ToString();
-                    userModel.Email = rdr["Email"].ToString();
-                    userModel.Password = rdr["Password"].ToString();
-                    userModel.UserRole = rdr["UserRole"].ToString();
-                    userModel.UserToken = rdr["UserToken"].ToString();
-                    userList.Add(userModel);
+                    sqlcon.Open();
+                    MySqlCommand sqlCmd = new MySqlCommand(query, sqlcon);
+                    MySqlDataReader rdr = sqlCmd.ExecuteReader();
+
+                    while (rdr.Read())
+                    {
+                        var userModel = new Player();
+                        userModel.PlayerId = Convert.ToInt32(rdr["UserId"]);
+                        userModel.UserName = rdr["UserName"].ToString();
+                        userModel.Email = rdr["Email"].ToString();
+                        userModel.Password = rdr["Password"].ToString();
+                        userModel.UserRole = rdr["UserRole"].ToString();
+                        userModel.UserToken = rdr["UserToken"].ToString();
+                        userList.Add(userModel);
+                    }
+                    sqlcon.Close();
                 }
-                sqlcon.Close();
+            } else
+            {
+                using (SqlConnection sqlcon = new SqlConnection(_connectionstring))
+                {
+                    sqlcon.Open();
+                    SqlCommand sqlCmd = new SqlCommand(query, sqlcon);
+                    SqlDataReader rdr = sqlCmd.ExecuteReader();
+
+                    while (rdr.Read())
+                    {
+                        var userModel = new Player();
+                        userModel.PlayerId = Convert.ToInt32(rdr["UserId"]);
+                        userModel.UserName = rdr["UserName"].ToString();
+                        userModel.Email = rdr["Email"].ToString();
+                        userModel.Password = rdr["Password"].ToString();
+                        userModel.UserRole = rdr["UserRole"].ToString();
+                        userModel.UserToken = rdr["UserToken"].ToString();
+                        userList.Add(userModel);
+                    }
+                    sqlcon.Close();
+                }
             }
+          
             return userList;
         }
 

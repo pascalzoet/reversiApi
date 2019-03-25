@@ -86,6 +86,7 @@ namespace ReversiApi.Controllers
             } catch (Exception ex)
             {
                 ModelState.AddModelError("summary", ex.Message);
+                ViewData["error"] = ex.Message;
                 return View(player);
             }
         }

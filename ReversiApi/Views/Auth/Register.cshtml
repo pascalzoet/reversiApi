@@ -2,7 +2,10 @@
     Layout = "_Layout";
     ViewData["Title"] = "Register";
 }
-
+@if(ViewData["error"] != null)
+{
+    @ViewData["error"]
+}
 <div class="row">
     <div class="col">
         <div class="card">

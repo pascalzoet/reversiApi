@@ -71,10 +71,10 @@ namespace ReversiApi
             }
             else if (Configuration.GetSection("Environment").Value == "Production")
             {
-                string connectionstring = Configuration.GetConnectionString("Production");
-                services.AddDbContext<GameContext>(options => options.UseMySql(connectionstring));
-                services.AddDbContext<PlayerContext>(options => options.UseMySql(connectionstring));
-                services.AddDbContext<ScoreContext>(options => options.UseMySql(connectionstring));
+                string _connectionstring = Configuration.GetConnectionString("Production");
+                services.AddDbContext<GameContext>(options => options.UseMySql(_connectionstring));
+                services.AddDbContext<PlayerContext>(options => options.UseMySql(_connectionstring));
+                services.AddDbContext<ScoreContext>(options => options.UseMySql(_connectionstring));
             }
 
             //set databases for migrations
