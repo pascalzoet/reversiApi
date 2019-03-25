@@ -62,16 +62,16 @@ namespace ReversiApi
             //add mvc to application
             services.AddMvc().SetCompatibilityVersion(CompatibilityVersion.Version_2_2);
 
-            if (Configuration.GetSection("Environment").Value == "Production")
+            if (Configuration.GetSection("Environment").Value == "Development")
             {
-                string connectionstring = Configuration.GetConnectionString("Production");
+                string connectionstring = Configuration.GetConnectionString("TestDatabase");
                 services.AddDbContext<GameContext>(options => options.UseSqlServer(connectionstring));
                 services.AddDbContext<PlayerContext>(options => options.UseSqlServer(connectionstring));
                 services.AddDbContext<ScoreContext>(options => options.UseSqlServer(connectionstring));
             }
-            else
+            else if (Configuration.GetSection("Environment").Value == "Production")
             {
-                string connectionstring = Configuration.GetConnectionString("TestDatabase");
+                string connectionstring = Configuration.GetConnectionString("Production");
                 services.AddDbContext<GameContext>(options => options.UseMySql(connectionstring));
                 services.AddDbContext<PlayerContext>(options => options.UseMySql(connectionstring));
                 services.AddDbContext<ScoreContext>(options => options.UseMySql(connectionstring));

@@ -213,7 +213,14 @@ Spa.Model = function () {
         Spa.Grafiek.toonGrafiek();
       });
     }).then(function () {
-      Spa.Template.parse();
+      Spa.Template.init(reversi_templates);
+      Spa.Api.weather().then(function (result) {
+        var weatherObj = reversi_templates.src.templates.gameplay.onset({
+          "place": result["name"],
+          "temp": parseInt(result["main"]["temp"] - 273.15) + " Graden"
+        });
+        Spa.Template.parse(weatherObj);
+      });
     });
   };
 
@@ -483,20 +490,18 @@ Spa.Template = function () {
     config.templates = templates;
   };
 
-  var getTemplate = function getTemplate() {};
+  var getTemplate = function getTemplate() {
+    return config.templates;
+  };
 
-  var parseTemplate = function parseTemplate() {
+  var parseTemplate = function parseTemplate(template) {
     //parse weater
-    Spa.Api.weather().then(function (result) {
-      $("#add").html(reversi_templates.src.templates.gameplay.onset({
-        "place": result["name"],
-        "temp": parseInt(result["main"]["temp"] - 273.15) + " Graden"
-      }));
-    });
+    $("#toprow").append($(template));
   };
 
   return {
     init: init,
-    parse: parseTemplate
+    parse: parseTemplate,
+    templates: getTemplate
   };
 }();
